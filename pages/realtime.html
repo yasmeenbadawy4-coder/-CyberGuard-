@@ -1,0 +1,164 @@
+<!DOCTYPE html><html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Live IDS — CyberGuard IDS</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>⚡</text></svg>">
+<link rel="stylesheet" href="../assets/css/style.css"></head>
+<body>
+<div class="ticker"><div class="ticker-inner" id="tickerInner"></div></div>
+<nav class="nav">
+  <div class="logo"><div class="logo-hex">⚡</div><div class="logo-text">CYBER<span style="color:var(--amber)">GUARD</span></div></div>
+  <ul class="nav-tabs"><li><a href="../index.html" class="nav-tab">DASHBOARD</a></li><li><a href="alerts.html" class="nav-tab">ALERTS</a></li><li><a href="scan.html" class="nav-tab">SCANNER</a></li><li><a href="realtime.html" class="nav-tab active">LIVE IDS</a></li><li><a href="education.html" class="nav-tab">CYBER INTEL</a></li><li><a href="models.html" class="nav-tab">MODELS & API</a></li></ul>
+  <div class="nav-right"><div class="sys-pill"><span class="sdot"></span>ONLINE</div><button class="bell-btn" id="bellBtn">🔔<span class="bell-count" id="bellCount">3</span></button><div class="user-chip" id="userChip"><div class="uav" id="avatarEl">A</div><span id="usernameEl">USER</span><span style="color:var(--txt3)">▼</span></div></div>
+</nav>
+<div class="alert-drawer" id="alertDrawer"><div class="dr-head"><span class="dr-title">⚠ ACTIVE ALERTS</span><button class="dr-close" id="drawerClose">✕</button></div><div class="dr-body" id="drawerBody"></div></div>
+<div class="dr-overlay" id="drawerOverlay"></div>
+<main class="wrap">
+  <div class="pg-head">
+    <div><h1 class="pg-title">LIVE NETWORK IDS MONITOR</h1>
+    <p class="pg-sub" id="liveStatusText">REAL-TIME THREAT DETECTION · ALL 6 MODELS · SERVER-SENT EVENTS · <span id="liveUptime">OFFLINE</span></p></div>
+    <div class="hd-acts">
+      <select class="f-sl" id="ifaceSelect" style="width:130px;padding:5px 8px;font-size:11px"><option value="eth0">eth0</option><option value="ens3">ens3</option><option value="wlan0">wlan0</option><option value="lo">lo</option></select>
+      <select class="f-sl" id="modeSelect" style="width:130px;padding:5px 8px;font-size:11px"><option value="simulate">Simulate (demo)</option><option value="capture">Live Capture (root)</option></select>
+      <button class="btn btn-sm btn-grn" id="startBtn" onclick="startLive()" data-permission="can_live_monitor">▶ START IDS</button>
+      <button class="btn btn-sm btn-red" id="stopBtn" onclick="stopLive()" style="display:none" data-permission="can_live_monitor">■ STOP IDS</button>
+    </div>
+  </div>
+  <div id="viewerNotice" style="display:none;background:var(--amber2);border:1px solid rgba(255,184,0,.3);border-radius:var(--r2);padding:12px 16px;margin-bottom:16px;font-family:var(--mono);font-size:12px;color:var(--amber)">⚠ Live monitoring requires Analyst or Admin role. Contact your administrator.</div>
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px" id="liveStats">
+    <div class="live-stat kpi r"><div class="live-stat-val" id="lsCritical" style="color:var(--red)">0</div><div class="live-stat-lbl">CRITICAL</div></div>
+    <div class="live-stat kpi a"><div class="live-stat-val" id="lsHigh" style="color:var(--amber)">0</div><div class="live-stat-lbl">HIGH</div></div>
+    <div class="live-stat kpi p"><div class="live-stat-val" id="lsMedium" style="color:var(--purple)">0</div><div class="live-stat-lbl">MEDIUM</div></div>
+    <div class="live-stat kpi g"><div class="live-stat-val" id="lsTotal" style="color:var(--teal)">0</div><div class="live-stat-lbl">TOTAL EVENTS</div></div>
+    <div class="live-stat kpi b"><div class="live-stat-val" id="lsRate" style="color:var(--teal);font-size:16px">0/s</div><div class="live-stat-lbl">DETECTION RATE</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 360px;gap:14px">
+    <div class="live-panel">
+      <div class="cd-hd" style="border-bottom:1px solid var(--bg4)">
+        <span class="cd-tt">LIVE DETECTION FEED</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="live-b off" id="sseStatus">DISCONNECTED</span>
+          <button class="btn btn-xs btn-out" onclick="clearFeed()">CLEAR</button>
+        </div>
+      </div>
+      <div class="live-feed" id="liveFeed"><div style="text-align:center;padding:60px;color:var(--txt3);font-family:var(--mono);font-size:12px">Click ▶ START IDS to begin real-time network monitoring<br><br>Simulate mode: generates realistic synthetic traffic patterns<br>Capture mode: requires root + Linux raw socket (AF_PACKET)</div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="card">
+        <div class="cd-hd"><span class="cd-tt">RECENT LIVE ALERTS</span></div>
+        <div id="liveAlertsList" style="padding:8px;max-height:280px;overflow-y:auto"></div>
+      </div>
+      <div class="card">
+        <div class="cd-hd"><span class="cd-tt">DETECTION BREAKDOWN</span></div>
+        <div id="liveBreakdown" style="padding:12px"></div>
+      </div>
+      <div class="card">
+        <div class="cd-hd"><span class="cd-tt">HOW LIVE IDS WORKS</span></div>
+        <div style="padding:12px;font-size:11px;color:var(--txt2);line-height:1.75;font-family:var(--mono)">
+          <b style="color:var(--teal)">Simulate mode:</b><br>
+          Generates realistic synthetic traffic patterns (70% normal, 12% DoS, 8% Probe, 5% R2L, 5% U2R). All 6 real models classify each flow in real-time.<br><br>
+          <b style="color:var(--amber)">Capture mode (Linux only):</b><br>
+          Raw socket (AF_PACKET) on selected interface. Extracts TCP/UDP flow features from actual packets. Requires root privileges.<br><br>
+          <b style="color:var(--green)">Alerts:</b> CRITICAL/HIGH triggers instant Slack notification (configure SLACK_WEBHOOK_URL in .env).
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+<footer class="footer"><span>CyberGuard IDS v1.0 · Binary + Multi-class · Real-Time IDS · NSL-KDD + UNSW-NB15</span><span id="ftTime"></span></footer>
+<script src="../assets/js/cyberguard.js"></script>
+<script>document.addEventListener('DOMContentLoaded',function(){requireLogin();initTicker();initNavDrawer();initUserChip();applyRBAC();document.getElementById('ftTime').textContent=new Date().toUTCString();if(typeof pageInit==='function')pageInit();});
+let _sse=null,_running=false,_startTime=null,_counts={CRITICAL:0,HIGH:0,MEDIUM:0,LOW:0,total:0},_breakdown={},_uptimeTimer=null;
+function pageInit(){
+  if(!hasPermission('can_live_monitor')){document.getElementById('viewerNotice').style.display='';document.getElementById('startBtn').disabled=true;}
+  checkStatus();
+}
+async function checkStatus(){
+  try{const s=await CG.liveStatus();if(s.running){_running=true;updateUI(true);}}catch{}
+}
+async function startLive(){
+  if(!hasPermission('can_live_monitor')){alert('Live IDS requires Analyst or Admin role.');return;}
+  const iface=document.getElementById('ifaceSelect').value;const mode=document.getElementById('modeSelect').value;
+  try{
+    const r=await withFallback(()=>CG.liveStart(iface,mode),()=>({success:true,message:'Live IDS started (demo mode)'}));
+    if(r.success||r.message){_running=true;_startTime=Date.now();updateUI(true);connectSSE();}
+    else alert('Failed: '+(r.error||'Unknown error'));
+  }catch(e){_running=true;_startTime=Date.now();updateUI(true);connectSSE();}  // demo fallback
+}
+async function stopLive(){
+  _running=false;if(_sse){_sse.close();_sse=null;}clearInterval(_uptimeTimer);
+  try{await withFallback(()=>CG.liveStop(),()=>({success:true}));}catch{}
+  updateUI(false);document.getElementById('sseStatus').textContent='DISCONNECTED';document.getElementById('sseStatus').classList.add('off');
+  document.getElementById('liveStatusText').innerHTML='REAL-TIME THREAT DETECTION · ALL 6 MODELS · <span id="liveUptime">OFFLINE</span>';
+}
+function updateUI(running){
+  document.getElementById('startBtn').style.display=running?'none':'';
+  document.getElementById('stopBtn').style.display=running?'':'none';
+  if(running){
+    _uptimeTimer=setInterval(()=>{
+      const s=Math.floor((Date.now()-_startTime)/1000);const m=Math.floor(s/60);const ss=s%60;
+      const el=document.getElementById('liveUptime');if(el)el.textContent='RUNNING '+m+'m '+ss+'s';
+    },1000);
+  }else clearInterval(_uptimeTimer);
+}
+function connectSSE(){
+  const token=getToken();
+  _sse=startLiveSSE(handleEvent);
+  const statusEl=document.getElementById('sseStatus');
+  if(_sse){statusEl.textContent='STREAMING';statusEl.classList.remove('off');}
+  // Demo mode fallback: simulate events if backend not available
+  setTimeout(()=>{if(_sse&&_sse.readyState===2){simulateDemoMode();}},3000);
+}
+function simulateDemoMode(){
+  if(!_running)return;
+  const demos=[
+    {event:'detection',label:'NORMAL',severity:'LOW',confidence:100,src_ip:'192.168.1.'+Math.floor(Math.random()*200+10),dst_ip:'10.0.0.5',service:'http',mitre:'N/A',family:'Benign Traffic',source:'simulated',recommendations:[]},
+    {event:'detection',label:'DoS',severity:'HIGH',confidence:90,src_ip:'103.21.'+Math.floor(Math.random()*255)+'.'+Math.floor(Math.random()*255),dst_ip:'10.0.0.5',service:'smtp',mitre:'TA0040 — Impact / T1498',family:'Denial of Service',cves:['CVE-2023-44487'],source:'simulated',recommendations:['Rate-limit SYN packets','Enable SYN cookies']},
+    {event:'detection',label:'Probe',severity:'MEDIUM',confidence:74,src_ip:'91.108.'+Math.floor(Math.random()*255)+'.'+Math.floor(Math.random()*255),dst_ip:'10.0.0.10',service:'private',mitre:'TA0043 — Reconnaissance / T1595',family:'Network Reconnaissance',source:'simulated',recommendations:['Block scanning IP','Deploy port-knocking']},
+    {event:'detection',label:'NORMAL',severity:'LOW',confidence:100,src_ip:'10.0.1.'+Math.floor(Math.random()*50),dst_ip:'10.0.0.5',service:'https',mitre:'N/A',family:'Benign Traffic',source:'simulated',recommendations:[]},
+  ];
+  const weights=[0.70,0.12,0.08,0.10];
+  function nextEvent(){
+    if(!_running)return;
+    const r=Math.random();let cum=0,idx=0;for(;idx<weights.length-1;idx++){cum+=weights[idx];if(r<cum)break;}
+    const ev={...demos[idx],timestamp:new Date().toISOString()};
+    handleEvent(ev);
+    setTimeout(nextEvent,1200+Math.random()*2000);
+  }
+  nextEvent();
+  document.getElementById('sseStatus').textContent='DEMO MODE';document.getElementById('sseStatus').classList.remove('off');
+}
+function handleEvent(data){
+  if(!data||data.event==='heartbeat'||data.event==='connected')return;
+  _counts.total++;
+  if(data.severity in _counts)_counts[data.severity]++;
+  _breakdown[data.label]=(_breakdown[data.label]||0)+1;
+  updateStats();addToFeed(data);
+  if(data.severity==='CRITICAL'||data.severity==='HIGH')addAlert(data);
+  updateBreakdown();
+}
+function updateStats(){
+  document.getElementById('lsCritical').textContent=_counts.CRITICAL;document.getElementById('lsHigh').textContent=_counts.HIGH;
+  document.getElementById('lsMedium').textContent=_counts.MEDIUM;document.getElementById('lsTotal').textContent=_counts.total;
+  if(_startTime){const rate=(_counts.total/((Date.now()-_startTime)/1000)).toFixed(1);document.getElementById('lsRate').textContent=rate+'/s';}
+}
+function addToFeed(ev){
+  const feed=document.getElementById('liveFeed');const sev=(ev.severity||'low').toLowerCase();
+  const el=document.createElement('div');el.className='live-row '+sev+' live-event';
+  const t=new Date(ev.timestamp||Date.now()).toLocaleTimeString();
+  el.innerHTML='<span class="live-time">'+t+'</span><span class="live-label">'+ev.label+'</span><span class="live-detail">'+ev.src_ip+' → '+(ev.dst_ip||ev.target||'?')+' ['+(ev.service||'?')+'] '+(ev.family||'')+(ev.source==='simulated'?' ·demo':'')+'</span>';
+  feed.insertBefore(el,feed.firstChild);if(feed.children.length>150)feed.removeChild(feed.lastChild);
+}
+function addAlert(ev){
+  const list=document.getElementById('liveAlertsList');const sev=(ev.severity||'high').toLowerCase();
+  const el=document.createElement('div');el.className='al-item '+sev;el.style.marginBottom='5px';
+  const t=new Date(ev.timestamp||Date.now()).toLocaleTimeString();
+  el.innerHTML='<div class="al-tt">'+ev.severity+': '+ev.label+'</div><div class="al-bd">'+ev.src_ip+' → '+(ev.dst_ip||'?')+'<br><span style="font-size:10px;color:var(--txt3)">'+((ev.mitre||'').substring(0,40))+'</span></div><div class="al-tm">'+t+'</div>';
+  list.insertBefore(el,list.firstChild);if(list.children.length>15)list.removeChild(list.lastChild);
+}
+function updateBreakdown(){
+  const el=document.getElementById('liveBreakdown');
+  const sorted=Object.entries(_breakdown).sort((a,b)=>b[1]-a[1]);
+  el.innerHTML=sorted.map(([l,c])=>{const pct=Math.round(c/_counts.total*100);const col={DoS:'var(--red)',Probe:'var(--purple)',R2L:'var(--amber)',U2R:'var(--red)',NORMAL:'var(--teal)',Other:'var(--txt3)'}[l]||'var(--teal)';return'<div style="margin-bottom:6px"><div style="display:flex;justify-content:space-between;font-size:10px;font-family:var(--mono);margin-bottom:2px"><span style="color:'+col+'">'+l+'</span><span style="color:var(--txt3)">'+c+' ('+pct+'%)</span></div><div style="height:4px;background:var(--bg4);border-radius:2px"><div style="height:100%;width:'+pct+'%;background:'+col+';border-radius:2px;transition:width .5s"></div></div>';}).join('')||'<div style="color:var(--txt3);font-family:var(--mono);font-size:11px">No detections yet.</div>';
+}
+function clearFeed(){document.getElementById('liveFeed').innerHTML='';_counts={CRITICAL:0,HIGH:0,MEDIUM:0,LOW:0,total:0};_breakdown={};_startTime=Date.now();updateStats();updateBreakdown();}
+</script></body></html>

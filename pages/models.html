@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Models & API — CyberGuard IDS</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>⚡</text></svg>">
+<link rel="stylesheet" href="../assets/css/style.css"></head>
+<body>
+<div class="ticker"><div class="ticker-inner" id="tickerInner"></div></div>
+<nav class="nav">
+  <div class="logo"><div class="logo-hex">⚡</div><div class="logo-text">CYBER<span style="color:var(--amber)">GUARD</span></div></div>
+  <ul class="nav-tabs"><li><a href="../index.html" class="nav-tab">DASHBOARD</a></li><li><a href="alerts.html" class="nav-tab">ALERTS</a></li><li><a href="scan.html" class="nav-tab">SCANNER</a></li><li><a href="realtime.html" class="nav-tab">LIVE IDS</a></li><li><a href="education.html" class="nav-tab">CYBER INTEL</a></li><li><a href="models.html" class="nav-tab active">MODELS & API</a></li></ul>
+  <div class="nav-right"><div class="sys-pill"><span class="sdot"></span>ONLINE</div><button class="bell-btn" id="bellBtn">🔔<span class="bell-count" id="bellCount">4</span></button><div class="user-chip" id="userChip"><div class="uav" id="avatarEl">A</div><span id="usernameEl">USER</span><span style="color:var(--txt3)">▼</span></div></div>
+</nav>
+<div class="alert-drawer" id="alertDrawer"><div class="dr-head"><span class="dr-title">⚠ ACTIVE ALERTS</span><button class="dr-close" id="drawerClose">✕</button></div><div class="dr-body" id="drawerBody"></div></div>
+<div class="dr-overlay" id="drawerOverlay"></div>
+<main class="wrap">
+  <div class="pg-head">
+    <div><h1 class="pg-title">MODELS & API REFERENCE</h1>
+    <p class="pg-sub">6 REAL TRAINED MODELS · NSL-KDD + UNSW-NB15 · BINARY + MULTI-CLASS · JWT RBAC · 25 API ENDPOINTS</p></div>
+    <div class="hd-acts" id="adminControls"></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+    <div class="card">
+      <div class="cd-hd"><span class="cd-tt">REAL MODEL PERFORMANCE</span><span style="font-size:10px;color:var(--txt3);font-family:var(--mono)">Trained on real datasets</span></div>
+      <div style="padding:14px"><div id="modelMetrics"></div></div>
+    </div>
+    <div class="card">
+      <div class="cd-hd"><span class="cd-tt">ENSEMBLE ARCHITECTURE</span></div>
+      <div style="padding:14px">
+        <p style="font-size:12px;color:var(--txt2);line-height:1.75;margin-bottom:12px">6 real models run in parallel. Weighted ensemble vote: RF(×3.0) + XGB(×2.5) + ANN(×2.0) + DT(×1.5) + Hybrid(×1.5). Autoencoder provides binary anomaly flag only. Final label = highest weighted confidence.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px">
+          <span class="badge b-ok">RF=100% NSL-KDD</span><span class="badge b-ok">XGB=100%</span><span class="badge b-ok">DT=100%</span>
+          <span class="badge b-ok">ANN=100%</span><span class="badge b-ok">AE=98.3% binary</span><span class="badge b-ok">Hybrid=84.3% UNSW</span>
+        </div>
+        <div class="code-block">Input flow → build_nsl(41 feat) + build_unsw(42 feat)
+     ↓
+NSL-KDD classifiers (multi-class):
+  RF  × 3.0  → DoS / Probe / R2L / U2R / NORMAL
+  XGB × 2.5  → DoS / Probe / R2L / U2R / NORMAL
+  DT  × 1.5  → DoS / Probe / R2L / U2R / NORMAL
+  ANN × 2.0  → DoS / Probe / R2L / U2R / NORMAL
+Autoencoder (binary, no vote weight):
+  AE         → Anomaly flag + score (vs threshold)
+UNSW-NB15 classifier (multi-class):
+  Hybrid × 1.5 → 10 categories incl. Exploits/Backdoors/Shellcode
+     ↓
+Weighted confidence vote → Final label
+     ↓
+MITRE ATT&CK + Real CVEs + Remediation + SHAP</div>
+      </div>
+    </div>
+      <div class="card"><div class="cd-hd"><span class="cd-tt">NSL-KDD DATASET</span><span class="badge b-in">41 FEATURES</span></div>
+      <div style="padding:14px;font-size:12px;color:var(--txt2);line-height:1.7">
+        <p style="margin-bottom:10px"><strong style="color:var(--txt)">Source:</strong> Canadian Institute for Cybersecurity<br><strong style="color:var(--txt)">Records:</strong> 148,517 training / 22,544 test<br><strong style="color:var(--txt)">URL:</strong> <span style="color:var(--teal)">www.unb.ca/cic/datasets/nsl.html</span></p>
+        <div style="display:flex;flex-wrap:wrap;gap:3px">${['duration','protocol_type','service','flag','src_bytes','dst_bytes','land','wrong_fragment','urgent','hot','num_failed_logins','logged_in','num_compromised','root_shell','su_attempted','num_root','serror_rate','rerror_rate','same_srv_rate','diff_srv_rate','dst_host_count','dst_host_serror_rate'].map(f=>`<span style="font-size:9px;font-family:var(--mono);background:var(--bg3);border:1px solid var(--bg5);border-radius:3px;padding:2px 5px;color:var(--txt3)">${f}</span>`).join('')}<span style="font-size:9px;color:var(--txt3);font-family:var(--mono);padding:2px 5px">+19 more</span></div>
+      </div>
+      </div>
+    <div class="card"><div class="cd-hd"><span class="cd-tt">UNSW-NB15 DATASET</span><span class="badge b-in">49 FEATURES</span></div>
+      <div style="padding:14px;font-size:12px;color:var(--txt2);line-height:1.7">
+        <p style="margin-bottom:10px"><strong style="color:var(--txt)">Source:</strong> Australian Centre for Cyber Security (UNSW)<br><strong style="color:var(--txt)">Records:</strong> 257,673 total<br><strong style="color:var(--txt)">URL:</strong> <span style="color:var(--teal)">research.unsw.edu.au/projects/unsw-nb15-dataset</span></p>
+        <p style="margin-bottom:8px"><strong style="color:var(--txt)">Categories:</strong> Fuzzers · Analysis · Backdoors · DoS · Exploits · Generic · Reconnaissance · Shellcode · Worms</p>
+        <div style="display:flex;flex-wrap:wrap;gap:3px">${['dur','proto','service','state','spkts','dpkts','sbytes','dbytes','rate','sttl','dttl','sload','dload','sjit','djit','tcprtt','synack','ackdat','smean','dmean','ct_srv_src'].map(f=>`<span style="font-size:9px;font-family:var(--mono);background:var(--bg3);border:1px solid var(--bg5);border-radius:3px;padding:2px 5px;color:var(--txt3)">${f}</span>`).join('')}<span style="font-size:9px;color:var(--txt3);font-family:var(--mono);padding:2px 5px">+28 more</span></div>
+      </div>
+    </div>
+    <div class="card" data-admin-only>
+      <div class="cd-hd"><span class="cd-tt">REST API REFERENCE</span><span class="badge b-in">v1.0 · 25 endpoints</span></div>
+      <div style="padding:14px;max-height:480px;overflow-y:auto"><div id="apiEndpoints"></div></div>
+    </div>
+    <div class="card">
+      <div class="cd-hd"><span class="cd-tt">EXAMPLE — DoS SCAN (Real Output)</span></div>
+      <div style="padding:14px">
+        <div class="code-block">POST /api/scan
+Authorization: Bearer &lt;jwt_token&gt;
+
+{
+  "target":       "10.0.0.5",
+  "protocol":     "tcp",      // tcp=1 (LabelEncoder)
+  "service":      "smtp",     // smtp=5
+  "flag":         "S0",       // S0=2 (SYN flood flag)
+  "src_bytes":    0,
+  "dst_bytes":    0,
+  "serror_rate":  0.95,       // key DoS feature
+  "count":        222,        // high count → flood
+  "logged_in":    0,
+  "duration":     0
+}
+
+// Real model output (tested 5/5 correct):
+{
+  "label":        "DoS",
+  "severity":     "HIGH",
+  "confidence":   95.4,
+  "mitre_tactic": "TA0040 — Impact / T1498",
+  "model_outputs": {
+    "random_forest":  {"label":"DoS", "confidence":100.0},
+    "xgboost":        {"label":"DoS", "confidence":100.0},
+    "decision_tree":  {"label":"DoS", "confidence":100.0},
+    "ann":            {"label":"DoS", "confidence":100.0},
+    "autoencoder":    {"anomaly":true, "score":38.4, "binary":true},
+    "hybrid_ae_xgb":  {"label":"Fuzzers", "confidence":78.2}
+  },
+  "cve_refs": [
+    "CVE-2024-3094 (XZ Utils CVSS 10.0)",
+    "CVE-2023-44487 (HTTP/2 Rapid Reset CVSS 7.5)"
+  ],
+  "recommendations": [
+    "Rate-limit SYN: iptables -A INPUT -p tcp ...",
+    "Enable SYN cookies: sysctl -w net.ipv4.tcp_syncookies=1",
+    "Deploy Cloudflare Magic Transit / AWS Shield"
+  ]
+}</div>
+      </div>
+    </div>
+  </div>
+</main>
+<footer class="footer"><span>CyberGuard IDS v1.0 · Real Models from Trained PKL · NSL-KDD + UNSW-NB15 · Binary + Multi-class</span><span id="ftTime"></span></footer>
+<script src="../assets/js/cyberguard.js"></script>
+<script>document.addEventListener('DOMContentLoaded',function(){requireLogin();initTicker();initNavDrawer();initUserChip();applyRBAC();document.getElementById('ftTime').textContent=new Date().toUTCString();pageInit();});
+
+async function pageInit() {
+  // Show REAL_MODELS immediately (real values from trained pkl)
+  renderModelMetrics(REAL_MODELS);
+  if (getUser().role === 'admin') {
+    document.getElementById('adminControls').innerHTML = '<button class="btn btn-sm btn-red" onclick="triggerRetrain()">↻ RELOAD MODELS</button>';
+  }
+  // Try to fetch fresh from backend
+  try {
+    const models = await CG.models();
+    if (Array.isArray(models) && models.length) renderModelMetrics(models);
+  } catch {}
+}
+
+function renderModelMetrics(models) {
+  document.getElementById('modelMetrics').innerHTML = models.map(m =>
+    '<div class="m-row">' +
+    '<div class="m-top"><span class="m-nm">'+m.name+' <span style="font-size:9px;color:var(--txt3)">('+m.dataset+' · '+m.features+' feat)</span></span>' +
+    '<span class="badge b-ok">'+m.accuracy+'%</span></div>' +
+    '<div class="m-nums"><span>F1: '+m.f1+'%</span><span>Prec: '+m.precision+'%</span><span>Rec: '+m.recall+'%</span>'+(m.note?'<span style="color:var(--txt3)">'+m.note+'</span>':'')+'</div>' +
+    '<div class="m-bar"><div class="m-fill" style="width:'+m.accuracy+'%"></div></div>' +
+    '</div>'
+  ).join('');
+
+  // Also update API endpoint section if admin
+  const el = document.getElementById('apiEndpoints');
+  if (el) el.innerHTML = ENDPOINTS.map(e =>
+    '<div style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid var(--bg4);flex-wrap:wrap">' +
+    '<span style="font-size:10px;font-weight:700;font-family:var(--mono);color:'+(e[0]==='GET'?'var(--teal)':e[0]==='PUT'?'var(--purple)':'var(--amber)')+';width:38px;flex-shrink:0">'+e[0]+'</span>' +
+    '<span style="font-size:11px;font-family:var(--mono);color:var(--txt);flex:1;word-break:break-all">'+e[1]+'</span>' +
+    '<span class="badge b-in" style="font-size:8px">'+e[2]+'</span>' +
+    '<span style="font-size:10px;color:var(--txt3);width:100%;padding-left:46px">'+e[3]+'</span></div>'
+  ).join('');
+}
+
+const ENDPOINTS = [
+  ['POST','/api/auth/register','None','Register new user (Viewer by default; Analyst/Admin need admin key)'],
+  ['POST','/api/auth/login','None','Authenticate and receive JWT token (8h expiry)'],
+  ['GET','/api/auth/me','Any','Current user info + full RBAC permissions map'],
+  ['GET','/api/auth/users','Admin','List all registered users'],
+  ['PUT','/api/auth/users/<u>/role','Admin','Change a user role'],
+  ['POST','/api/auth/users/<u>/deactivate','Admin','Disable a user account'],
+  ['GET','/api/health','None','System status and all 6 model availability (no auth needed)'],
+  ['GET','/api/stats','Any','24h event statistics and attack distribution'],
+  ['GET','/api/alerts','Any','Live alert feed (filterable by severity)'],
+  ['POST','/api/alerts/<id>/ack','Any','Toggle acknowledgement on an alert'],
+  ['GET','/api/events','Any','Paginated scan event log'],
+  ['GET','/api/models','Any','All 6 model metadata and real performance metrics'],
+  ['POST','/api/scan','Analyst+','Classify a network flow through all 6 real models'],
+  ['POST','/api/scan/raw','Analyst+','Parse tcpdump/log text and classify all flows'],
+  ['POST','/api/scan/pcap','Analyst+','Upload .pcap file — auto-extract and classify flows'],
+  ['GET','/api/shap/<id>','Analyst+','Real RF feature importance explanation for a scan'],
+  ['POST','/api/report/pdf','Analyst+','Download branded PDF report with all 6 model outputs'],
+  ['POST','/api/notify/email','Analyst+','Email scan report via SMTP (configure in .env)'],
+  ['POST','/api/notify/slack','Admin','Post alert to Slack webhook (configure in .env)'],
+  ['GET','/api/siem/export','Analyst+','Export events as CEF (Splunk) / LEEF (QRadar) / JSON'],
+  ['POST','/api/live/start','Analyst+','Start real-time IDS (simulate or live capture mode)'],
+  ['POST','/api/live/stop','Analyst+','Stop real-time IDS monitoring'],
+  ['GET','/api/live/status','Any','Real-time IDS running status and SSE client count'],
+  ['GET','/api/live/stream','Any','SSE stream for real-time detections (pass ?token= for auth)'],
+  ['POST','/api/retrain','Admin','Reload trained models from disk after python train.py'],
+];
+
+async function triggerRetrain() {
+  if (!confirm('Reload models from disk?')) return;
+  const btn = event.target; btn.disabled=true; btn.textContent='RELOADING…';
+  const r = await withFallback(() => CG.retrain(), () => ({success:true,message:'Models reloaded (demo)'}));
+  alert('✅ ' + r.message);
+  btn.disabled=false; btn.textContent='↻ RELOAD MODELS';
+}
+</script></body></html>

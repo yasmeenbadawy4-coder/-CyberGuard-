@@ -1,0 +1,78 @@
+<!DOCTYPE html><html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Cyber Intel — CyberGuard IDS</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>⚡</text></svg>">
+<link rel="stylesheet" href="../assets/css/style.css"></head>
+<body>
+<div class="ticker"><div class="ticker-inner" id="tickerInner"></div></div>
+<nav class="nav">
+  <div class="logo"><div class="logo-hex">⚡</div><div class="logo-text">CYBER<span style="color:var(--amber)">GUARD</span></div></div>
+  <ul class="nav-tabs"><li><a href="../index.html" class="nav-tab">DASHBOARD</a></li><li><a href="alerts.html" class="nav-tab">ALERTS</a></li><li><a href="scan.html" class="nav-tab">SCANNER</a></li><li><a href="realtime.html" class="nav-tab">LIVE IDS</a></li><li><a href="education.html" class="nav-tab active">CYBER INTEL</a></li><li><a href="models.html" class="nav-tab">MODELS & API</a></li></ul>
+  <div class="nav-right"><div class="sys-pill"><span class="sdot"></span>ONLINE</div><button class="bell-btn" id="bellBtn">🔔<span class="bell-count" id="bellCount">3</span></button><div class="user-chip" id="userChip"><div class="uav" id="avatarEl">A</div><span id="usernameEl">USER</span><span style="color:var(--txt3)">▼</span></div></div>
+</nav>
+<div class="alert-drawer" id="alertDrawer"><div class="dr-head"><span class="dr-title">⚠ ACTIVE ALERTS</span><button class="dr-close" id="drawerClose">✕</button></div><div class="dr-body" id="drawerBody"></div></div>
+<div class="dr-overlay" id="drawerOverlay"></div>
+<main class="wrap">
+  <div class="edu-hero">
+    <div class="edu-tt">CYBER INTELLIGENCE CENTER</div>
+    <div class="edu-sub">Real-world breach analysis, MITRE ATT&CK, vulnerability database, breach response playbook, and AI-powered security guidance</div>
+    <div class="stat-row">
+      <div class="stat-item"><div class="stat-num">$4.88M</div><div class="stat-lbl">AVG BREACH COST 2024</div></div>
+      <div class="stat-item"><div class="stat-num">194</div><div class="stat-lbl">DAYS TO DETECT</div></div>
+      <div class="stat-item"><div class="stat-num">39s</div><div class="stat-lbl">BETWEEN ATTACKS</div></div>
+      <div class="stat-item"><div class="stat-num">73%</div><div class="stat-lbl">RANSOMWARE GROWTH YoY</div></div>
+    </div>
+  </div>
+  <div class="edu-cards" id="whyCards"></div>
+  <div class="divider"></div>
+  <div class="sec-hd"><span class="sec-tt">REAL-WORLD BREACH CASE STUDIES</span><span class="sec-ct">Root cause · Impact · Lessons learned</span></div>
+  <div id="incidentsList"></div>
+  <div class="divider"></div>
+  <div class="sec-hd"><span class="sec-tt">COMMON VULNERABILITIES & DEFENSES</span><span class="sec-ct">OWASP Top 10 + critical CVEs 2024</span></div>
+  <div class="vuln-grid" id="vulnGrid"></div>
+  <div class="divider"></div>
+  <div class="sec-hd"><span class="sec-tt">BREACH RESPONSE PLAYBOOK</span><span class="sec-ct">Execute in order — every minute counts</span></div>
+  <div id="breachTimeline"></div>
+</main>
+<footer class="footer"><span>CyberGuard IDS v1.0 · Real ML Models · NSL-KDD + UNSW-NB15 · Binary + Multi-class · MITRE ATT&CK · Real CVEs</span><span id="ftTime"></span></footer>
+<script src="../assets/js/cyberguard.js"></script>
+<script>document.addEventListener('DOMContentLoaded',function(){requireLogin();initTicker();initNavDrawer();initUserChip();applyRBAC();document.getElementById('ftTime').textContent=new Date().toUTCString();if(typeof pageInit==='function')pageInit();});
+const WHY=[
+  {ic:'🏦',ct:'FINANCIAL DEVASTATION',cb:'IBM 2024: $4.88M average breach cost (+10% YoY). Healthcare: $9.77M per incident. Ransomware victims paid avg $1.54M in 2023. Organisations without IR plans spend 58% more per breach. Small businesses rarely survive without pre-positioned cyber insurance.'},
+  {ic:'⏱️',ct:'DETECTION SPEED IS SURVIVAL',cb:'Mean time to identify: 194 days. Mean time to contain: 64 additional days. Organisations detecting within 30 days save $1M+ per incident. Every minute of attacker dwell time = more lateral movement, more data exfiltrated, more systems compromised.'},
+  {ic:'🔗',ct:'SUPPLY CHAIN ATTACKS',cb:'62% of nation-state intrusions now target software supply chains. SolarWinds 2020: 18,000 customers via one poisoned build. XZ Utils 2024 (CVE-2024-3094 CVSS 10.0): backdoor inserted into critical Linux library. MOVEit 2023: 2,600+ organisations, 83M+ victims via one SQLi.'},
+  {ic:'🏥',ct:'CRITICAL INFRASTRUCTURE',cb:'46% of healthcare hit by ransomware in 2023. Colonial Pipeline: 6-day shutdown of 45% of US East Coast fuel — caused by one VPN account with no MFA. Water treatment plants, power grids, and hospitals are prime targets with life-threatening consequences.'},
+  {ic:'📱',ct:'EXPANDING ATTACK SURFACE',cb:'1.5 billion IoT attacks in 2023. Remote work permanently dissolved the network perimeter. Every unmanaged device, misconfigured S3 bucket, and default-password IoT sensor is a potential entry point. Zero-trust is now the mandatory minimum, not an advanced option.'},
+  {ic:'⚖️',ct:'REGULATORY & LEGAL RISK',cb:'GDPR: up to €20M or 4% of global annual revenue. HIPAA: $1.9M per category per year. SEC now requires public companies to disclose material incidents within 4 business days. C-suite executives face personal criminal liability in multiple jurisdictions.'},
+];
+const INCIDENTS=[
+  {year:'2024',title:'XZ Utils Backdoor — CVE-2024-3094 CVSS 10.0',body:'2-year social engineering attack: attacker built trust as maintainer then inserted backdoor into XZ Utils 5.6.0/5.6.1, targeting sshd on systemd-based Linux. Caught by Andres Freund noticing 500ms ssh login slowdown. Narrowly avoided global catastrophic compromise.',tags:['Supply Chain','CVSS 10.0','Social Engineering','sshd','Near Miss']},
+  {year:'2023',title:'MOVEit Transfer — 83 Million Victims',body:'Cl0p exploited CVE-2023-34362 (SQL injection, CVSS 9.8) in MOVEit before patch existed. 2,600+ organisations affected including US federal agencies, British Airways, BBC, Shell. Pure data exfiltration — no ransomware needed. Root cause: SQLi in trusted file transfer software.',tags:['Zero-Day','SQL Injection','83M Victims','CVE-2023-34362','Cl0p']},
+  {year:'2021',title:'Colonial Pipeline — 6-Day US Fuel Crisis',body:'DarkSide ransomware encrypted billing systems, forcing voluntary shutdown of 5,500 miles of pipeline supplying 45% of US East Coast fuel. $4.4M ransom paid. Root cause: single compromised VPN account with NO MFA enabled.',tags:['Ransomware','No MFA','OT/IT Gap','$4.4M Ransom','Critical Infrastructure']},
+  {year:'2020',title:'SolarWinds SUNBURST — 9-Month Undetected Breach',body:'APT29 (Russian SVR) injected SUNBURST backdoor into SolarWinds Orion build pipeline. 18,000 customers received malicious update including US Treasury, DoD, and Fortune 500. 9-month dwell time. Discovered when FireEye noticed red-team tools exfiltrated.',tags:['Supply Chain','APT29','Nation-State','9-Month Dwell','18,000 Victims']},
+  {year:'2017',title:'WannaCry Ransomware — $4–8B Global Damage',body:'EternalBlue (MS17-010, patched 2 months prior) allowed self-propagation to 200,000+ systems in 150 countries in 72 hours. NHS cancelled 19,000 appointments. Root causes: unpatched Windows XP systems and zero network segmentation.',tags:['Ransomware','EternalBlue','NSA Exploit','$4-8B','Unpatched Systems']},
+];
+const VULNS=[
+  {name:'SQL Injection (CWE-89)',desc:'Malicious SQL enables reading/modifying/deleting entire databases. #1 most exploited vulnerability. CVE-2023-34362 CVSS 9.8 compromised 83M people via MOVEit.',fix:'✓ Parameterized queries only · WAF with OWASP CRS · Least-privilege DB accounts · Input allowlists'},
+  {name:'Broken Authentication (CWE-287)',desc:'81% of hacking breaches involve weak credentials. Default passwords, no lockout, no MFA, session fixation. Colonial Pipeline: one VPN account with no MFA = $4.4M ransom.',fix:'✓ MFA everywhere · Secure session tokens · Rate limiting · Account lockout · HIBP validation'},
+  {name:'No MFA on Critical Services',desc:'Single most preventable root cause in major breaches (Colonial Pipeline, SolarWinds, MOVEit). One stolen credential = complete compromise without MFA.',fix:'✓ Enforce MFA on SSH, VPN, RDP, admin consoles · FIDO2 hardware keys for privileged access'},
+  {name:'Unpatched CVEs (CWE-1104)',desc:'Log4Shell (CVSS 10.0) weaponised within hours of disclosure. Attackers scan for unpatched systems within minutes of CVE publication.',fix:'✓ Critical patches within 24h · Automated scanning · SBOM tracking · Patching SLA by CVSS score'},
+  {name:'Supply Chain Compromise',desc:'SolarWinds, XZ Utils, Log4j — one upstream compromise reaches thousands of downstream targets simultaneously.',fix:'✓ SBOM (Software Bill of Materials) · Code signing · CI/CD MFA · Dependency integrity checks'},
+  {name:'Privilege Escalation (CWE-269)',desc:'NSL-KDD U2R category. PwnKit (CVE-2021-4034), Dirty Pipe (CVE-2022-0847), nf_tables (CVE-2024-1086) give attackers root.',fix:'✓ Principle of least privilege · PAM solutions · Regular kernel patching · EDR monitoring'},
+  {name:'Default Credentials / Misconfig',desc:'Open S3 buckets, default passwords, verbose errors, unnecessary services. Most common pentest finding year after year. Affects 90%+ of applications.',fix:'✓ CIS Benchmarks · Infrastructure-as-Code · Disable all defaults · Automated config scanning'},
+  {name:'Insecure Deserialization (CWE-502)',desc:'Untrusted serialized data triggers RCE. Extremely dangerous in Java (Python pickle, PHP unserialize). Used in post-Log4Shell exploitation chains.',fix:'✓ Never deserialize untrusted data · Digital signatures · Allowlist expected classes · Sandboxing'},
+];
+const PLAYBOOK=[
+  {n:'01',tt:'⚡ DETECT & TRIAGE (0–15 min)',tx:'Confirm true positive. Classify type (ransomware, exfil, DDoS, insider). Assign P1/P2/P3. Activate IR team. Notify CISO within 15 min. Start timestamped incident log — every action must be documented for forensics and legal proceedings.'},
+  {n:'02',tt:'🔒 CONTAIN (15–60 min)',tx:'Isolate affected systems — DO NOT power off (memory = forensic gold: credentials, encryption keys, malware). Take memory snapshot with Volatility/LiME. Enable enhanced logging on adjacent systems. Block attacker C2 IPs and revoke compromised credentials immediately.'},
+  {n:'03',tt:'📋 NOTIFY STAKEHOLDERS (1–4 hours)',tx:'Brief legal counsel, CISO, executive leadership. Start regulatory clock — GDPR: 72h, SEC: 4 business days. Engage cyber insurance carrier. Brief PR team for external messaging. Do not confirm breach details until scope is understood.'},
+  {n:'04',tt:'🔍 INVESTIGATE & SCOPE (4–48 hours)',tx:'Root cause analysis: patient zero, full timeline, blast radius. Evidence preservation (chain-of-custody). Map every touched system and exfiltrated data. Engage external forensics (Mandiant, CrowdStrike) if needed. Hunt for persistence and backdoors.'},
+  {n:'05',tt:'🧹 ERADICATE & RECOVER (48–96 hours)',tx:'Remove malware and close attack vectors. Patch vulnerability on ALL hosts before reconnecting. Rebuild compromised systems from clean baselines. Restore from verified backups. Reset all passwords and rotate every secret/API key.'},
+  {n:'06',tt:'📊 POST-INCIDENT REVIEW (30 days)',tx:'Blameless post-mortem with all responders. Update IDS signatures and detection rules with confirmed IoCs. Implement preventive controls. Update and re-test IR plan. Third-party penetration test to verify remediation. Board report with lessons learned.'},
+];
+function pageInit(){
+  document.getElementById('whyCards').innerHTML=WHY.map(c=>'<div class="edu-card"><div class="edu-ic">'+c.ic+'</div><div class="edu-ct">'+c.ct+'</div><div class="edu-cb">'+c.cb+'</div></div>').join('');
+  document.getElementById('incidentsList').innerHTML=INCIDENTS.map(i=>'<div class="incident"><div><div class="inc-yr">'+i.year+'</div></div><div><div class="inc-tt">'+i.title+'</div><div class="inc-bd">'+i.body+'</div><div class="inc-tags">'+i.tags.map(t=>'<span class="inc-tg">'+t+'</span>').join('')+'</div></div></div>').join('');
+  document.getElementById('vulnGrid').innerHTML=VULNS.map(v=>'<div class="vuln-card"><div class="vuln-nm">⚠ '+v.name+'</div><div class="vuln-ds">'+v.desc+'</div><div class="vuln-fx">'+v.fix+'</div></div>').join('');
+  document.getElementById('breachTimeline').innerHTML=PLAYBOOK.map(s=>'<div style="display:grid;grid-template-columns:48px 1fr;margin-bottom:20px"><div><div style="width:32px;height:32px;background:rgba(0,191,173,.08);border:1px solid rgba(0,191,173,.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--teal);font-family:var(--display)">'+s.n+'</div></div><div style="padding-bottom:20px;padding-left:14px;border-left:1px solid rgba(0,191,173,.1);margin-left:15px"><div style="font-size:13px;font-weight:600;margin-bottom:5px;font-family:var(--mono);color:var(--txt)">'+s.tt+'</div><div style="font-size:12px;color:var(--txt2);line-height:1.7">'+s.tx+'</div></div></div>').join('');
+}</script></body></html>

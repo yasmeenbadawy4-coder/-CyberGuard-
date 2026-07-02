@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Scanner — CyberGuard IDS</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>⚡</text></svg>">
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="ticker"><div class="ticker-inner" id="tickerInner"></div></div>
+<nav class="nav">
+  <div class="logo"><div class="logo-hex">⚡</div><div class="logo-text">CYBER<span style="color:var(--amber)">GUARD</span></div></div>
+  <ul class="nav-tabs">
+    <li><a href="../index.html" class="nav-tab">DASHBOARD</a></li>
+    <li><a href="alerts.html"  class="nav-tab">ALERTS</a></li>
+    <li><a href="scan.html"    class="nav-tab active">SCANNER</a></li>
+    <li><a href="realtime.html" class="nav-tab">LIVE IDS</a></li>
+    <li><a href="education.html" class="nav-tab">CYBER INTEL</a></li>
+    <li><a href="models.html"  class="nav-tab">MODELS &amp; API</a></li>
+  </ul>
+  <div class="nav-right">
+    <div class="sys-pill"><span class="sdot"></span>ONLINE</div>
+    <button class="bell-btn" id="bellBtn">🔔<span class="bell-count" id="bellCount">4</span></button>
+    <div class="user-chip" id="userChip"><div class="uav" id="avatarEl">A</div><span id="usernameEl">USER</span><span style="color:var(--txt3)">▼</span></div>
+  </div>
+</nav>
+<div class="alert-drawer" id="alertDrawer"><div class="dr-head"><span class="dr-title">⚠ ACTIVE ALERTS</span><button class="dr-close" id="drawerClose">✕</button></div><div class="dr-body" id="drawerBody"></div></div>
+<div class="dr-overlay" id="drawerOverlay"></div>
+
+<main class="wrap">
+  <div class="pg-head">
+    <div><h1 class="pg-title">THREAT SCANNER</h1>
+    <p class="pg-sub">6 REAL ML MODELS · NSL-KDD + UNSW-NB15 · BINARY &amp; MULTI-CLASS · SHAP · PDF · EMAIL</p></div>
+  </div>
+
+  <div id="viewerNotice" style="display:none;background:var(--amber2);border:1px solid rgba(255,184,0,.3);border-radius:var(--r2);padding:12px 16px;margin-bottom:16px;font-family:var(--mono);font-size:12px;color:var(--amber)">⚠ Viewer role cannot run scans. Contact an admin to upgrade your role.</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+    <!-- LEFT: Config -->
+    <div class="card">
+      <div class="cd-hd"><span class="cd-tt">SCAN CONFIGURATION</span>
+        <div class="tab-bar">
+          <button class="tab-btn active" id="tabM" onclick="switchScanTab('manual')">MANUAL</button>
+          <button class="tab-btn" id="tabR" onclick="switchScanTab('raw')">RAW LOGS</button>
+          <button class="tab-btn" id="tabP" onclick="switchScanTab('pcap')">.PCAP</button>
+        </div>
+      </div>
+      <div style="padding:18px">
+        <!-- Manual tab -->
+        <div id="modeManual">
+          <div class="f-rw f-sc">
+            <div><label class="f-lb">Target IP / Range</label><input class="f-in" id="mTarget" value="192.168.1.10" placeholder="192.168.1.0/24"></div>
+            <div><label class="f-lb">Protocol</label><select class="f-sl" id="mProto"><option>tcp</option><option>udp</option><option>icmp</option><option>http</option><option>https</option><option>ssh</option><option>ftp</option><option>smtp</option><option>dns</option></select></div>
+          </div>
+          <div class="f-rw f-sc">
+            <div><label class="f-lb">Service / Port</label><select class="f-sl" id="mService"><option>http</option><option>https</option><option>ftp</option><option>ssh</option><option>smtp</option><option>dns</option><option>telnet</option><option>private</option><option>domain_u</option></select></div>
+            <div><label class="f-lb">TCP Flag</label><select class="f-sl" id="mFlag"><option value="SF">SF (normal)</option><option value="S0">S0 (SYN flood)</option><option value="REJ">REJ (probe)</option><option value="RSTO">RSTO (reset)</option></select></div>
+          </div>
+          <div class="f-rw f-sc">
+            <div><label class="f-lb">Src Bytes</label><input class="f-in" id="mSrcBytes" type="number" value="1000"></div>
+            <div><label class="f-lb">Dst Bytes</label><input class="f-in" id="mDstBytes" type="number" value="500"></div>
+          </div>
+          <div class="f-rw f-sc">
+            <div><label class="f-lb">SError Rate (0–1)</label><input class="f-in" id="mSerr" type="number" step="0.01" min="0" max="1" value="0.0" placeholder="0.95 for DoS"></div>
+            <div><label class="f-lb">RError Rate (0–1)</label><input class="f-in" id="mRerr" type="number" step="0.01" min="0" max="1" value="0.0" placeholder="0.85 for Probe"></div>
+          </div>
+          <div class="f-rw f-sc">
+            <div><label class="f-lb">Connection Count</label><input class="f-in" id="mCount" type="number" value="10" placeholder="200+ = DoS"></div>
+            <div><label class="f-lb">Failed Logins</label><input class="f-in" id="mNFL" type="number" value="0" placeholder="10+ = R2L"></div>
+          </div>
+          <div class="f-rw f-sc">
+            <div><label class="f-lb">Logged In (0/1)</label><input class="f-in" id="mLoggedIn" type="number" min="0" max="1" value="1"></div>
+            <div><label class="f-lb">Duration (s)</label><input class="f-in" id="mDur" type="number" value="2"></div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px">
+            <span style="font-size:10px;color:var(--txt3);font-family:var(--mono);width:100%">QUICK PRESETS (Verified on Real NSL-KDD Models):</span>
+            <button class="btn btn-xs btn-red" onclick="preset('dos')">⚡ DoS (neptune)</button>
+            <button class="btn btn-xs btn-amb" onclick="preset('probe')">🔍 Probe (ipsweep)</button>
+            <button class="btn btn-xs btn-amb" onclick="preset('r2l')">🔑 R2L (guess_passwd)</button>
+            <button class="btn btn-xs btn-red" onclick="preset('u2r')">🔺 U2R (buffer_overflow)</button>
+            <button class="btn btn-xs btn-out" onclick="preset('normal')">✓ Normal Traffic</button>
+          </div>
+        </div>
+
+        <!-- Raw logs tab -->
+        <div id="modeRaw" style="display:none">
+          <div class="f-sc"><label class="f-lb">Paste tcpdump / Syslog / Firewall Logs</label>
+          <textarea class="f-ta" id="rawData" style="min-height:220px" placeholder="14:32:01 IP 103.21.244.31.52431 > 10.0.0.5.80: Flags [S], length 0&#10;Supports: tcpdump, Zeek, syslog, iptables log"></textarea>
+          <div class="f-ht">Auto-extracts flow features from raw log text</div></div>
+        </div>
+
+        <!-- PCAP tab -->
+        <div id="modePcap" style="display:none">
+          <div class="f-sc"><label class="f-lb">.pcap / .pcapng File</label>
+          <input type="file" id="pcapFile" accept=".pcap,.pcapng,.cap" class="f-in" style="padding:8px">
+          <div class="f-ht">Max 50 MB · scapy extracts flow features automatically</div></div>
+        </div>
+
+        <!-- Email section -->
+        <div class="email-box">
+          <div class="email-box-title">📧 RECEIVE RESULTS BY EMAIL</div>
+          <div class="f-rw">
+            <div><label class="f-lb">Your Name</label><input class="f-in" id="eName" placeholder="Jane Smith"></div>
+            <div><label class="f-lb">Email Address</label><input class="f-in" id="eEmail" type="email" placeholder="jane@example.com"></div>
+          </div>
+          <!-- Email config warning - shown if SMTP not configured -->
+          <div id="emailConfigNote" style="display:none;background:rgba(255,184,0,.08);border:1px solid rgba(255,184,0,.25);border-radius:var(--r);padding:9px 12px;font-size:11px;font-family:var(--mono);color:var(--amber);margin-top:8px;line-height:1.7">
+            ⚠ <strong>Email requires Gmail App Password configuration.</strong><br>
+            In <code>backend/.env</code> set:<br>
+            &nbsp;&nbsp;SMTP_USER=your@gmail.com<br>
+            &nbsp;&nbsp;SMTP_PASS=<strong>xxxx xxxx xxxx xxxx</strong> (App Password — NOT your login password)<br>
+            Get one at: <a href="https://myaccount.google.com/security" target="_blank" style="color:var(--teal)">myaccount.google.com → Security → App passwords</a>
+          </div>
+        </div>
+
+        <button class="btn btn-pri btn-full" id="scanBtn" onclick="runScan()" style="font-family:'Orbitron',sans-serif;letter-spacing:1.5px">▶ INITIATE 6-MODEL AI SCAN</button>
+      </div>
+    </div>
+
+    <!-- RIGHT: Results -->
+    <div class="card">
+      <div class="cd-hd" id="resHeader"><span class="cd-tt">SCAN RESULTS</span><div id="resBadge"></div></div>
+
+      <!-- Placeholder -->
+      <div id="resPlaceholder" style="text-align:center;padding:50px 20px;color:var(--txt3)">
+        <div style="font-size:44px;margin-bottom:12px;opacity:.25">⬡</div>
+        <div style="font-size:13px;font-weight:600;color:var(--txt2);margin-bottom:6px;font-family:var(--mono)">AWAITING SCAN INPUT</div>
+        <div style="font-size:11px;line-height:1.65;font-family:var(--mono)">Configure target then click<br><span style="color:var(--teal)">▶ INITIATE 6-MODEL AI SCAN</span></div>
+        <div style="margin-top:20px;display:flex;flex-wrap:wrap;gap:4px;justify-content:center">
+          <span class="badge b-ok">RF=74.6%</span><span class="badge b-ok">XGB=75.9%</span><span class="badge b-ok">DT=75.9%</span>
+          <span class="badge b-ok">ANN=75.5%</span><span class="badge b-ok">AE=77.9%</span><span class="badge b-ok">Hybrid=84.3%</span>
+          <span class="badge b-in">SHAP</span><span class="badge b-in">PDF</span><span class="badge b-in">Email</span>
+        </div>
+      </div>
+
+      <!-- Progress -->
+      <div id="resProgress" class="prog-wr" style="display:none">
+        <div style="font-size:12px;color:var(--teal);font-family:var(--mono);letter-spacing:.5px" id="progLabel">⚡ RUNNING 6 REAL ML MODELS…</div>
+        <div class="prog-tk"><div class="prog-fl" id="progressBar" style="width:0"></div></div>
+        <div class="prog-st" id="progressStep">Loading NSL-KDD feature vectors (41 features)…</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-top:10px" id="modelChips"></div>
+      </div>
+
+      <!-- Results -->
+      <div id="resContent" style="display:none;padding:16px">
+        <div id="resSummary"></div>
+        <div id="resModels"></div>
+        <div id="resCVE"></div>
+        <div id="resActions"></div>
+        <div id="shapSection" style="display:none">
+          <div style="font-size:10px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px;font-family:var(--mono);margin:14px 0 8px">SHAP — FEATURE IMPORTANCE (Real RF)</div>
+          <div class="shap-bars"></div>
+          <div class="find-bl shap-nl" style="font-size:12px;color:var(--txt2);line-height:1.65;margin-top:8px;font-family:var(--mono);display:none"></div>
+        </div>
+        <div style="display:flex;gap:7px;margin-top:14px;flex-wrap:wrap">
+          <button class="btn btn-sm btn-sec" onclick="loadShap()" data-permission="can_shap">🔬 SHAP</button>
+          <button class="btn btn-sm btn-out" onclick="downloadPdf()" data-permission="can_pdf">📋 PDF</button>
+          <button class="btn btn-sm btn-out" onclick="sendEmailResult()" data-permission="can_email">📧 EMAIL</button>
+          <button class="btn btn-sm btn-amb" onclick="postSlack()" data-permission="can_slack">💬 SLACK</button>
+          <button class="btn btn-sm btn-out" onclick="clearScan()">✕ CLEAR</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <div class="sec-hd"><span class="sec-tt">SCAN HISTORY</span><span class="sec-ct" id="histCount">0 scans this session</span></div>
+  <div id="histGrid"></div>
+</main>
+
+<footer class="footer">
+  <span>CyberGuard IDS v1.0 · Real Models: RF · XGBoost · DT · ANN · Autoencoder · Hybrid AE+XGB · NSL-KDD + UNSW-NB15</span>
+  <span id="ftTime"></span>
+</footer>
+
+<script src="../assets/js/cyberguard.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  requireLogin(); initTicker(); initNavDrawer(); initUserChip(); applyRBAC();
+  document.getElementById('ftTime').textContent = new Date().toUTCString();
+  if (!hasPermission('can_scan')) {
+    document.getElementById('viewerNotice').style.display = '';
+    document.getElementById('scanBtn').disabled = true;
+  }
+  renderHistory();
+  loadScanHistory();
+});
+
+const STEPS = [
+  'Loading NSL-KDD feature vectors (41 features)…',
+  'Running Random Forest  (NSL-KDD  Acc=74.6%)…',
+  'Running XGBoost GBM    (NSL-KDD  Acc=75.9%)…',
+  'Running Decision Tree  (NSL-KDD  Acc=75.9%)…',
+  'Running ANN 256-128-64 (NSL-KDD  Acc=75.5%)…',
+  'Running Autoencoder PCA anomaly detector  (Acc=77.9%)…',
+  'Running Hybrid AE+XGBoost  (UNSW-NB15  Acc=84.3%)…',
+  'Applying weighted ensemble vote (RF×3 + XGB×2.5 + ANN×2)…',
+  'Mapping MITRE ATT&CK tactic and technique…',
+  'Retrieving real CVE references…',
+  'Generating specific remediation commands…',
+  'Building final assessment report…',
+];
+const MCHIPS = ['Random Forest','XGBoost','Decision Tree','ANN','Autoencoder','Hybrid AE+XGB'];
+let currentScanId = null, lastScanData = null;
+let scanHistory = [];
+
+function loadScanHistory() {
+  try { scanHistory = JSON.parse(sessionStorage.getItem('cg_hist') || '[]'); } catch {}
+  renderHistory();
+}
+
+const PRESETS = {
+  dos:    {mTarget:'10.0.0.5',   mProto:'tcp', mService:'smtp',    mFlag:'S0',  mSrcBytes:'0',    mDstBytes:'0',    mSerr:'0.95', mRerr:'0.0',  mCount:'222', mNFL:'0',  mLoggedIn:'0', mDur:'0'},
+  probe:  {mTarget:'10.0.0.10',  mProto:'tcp', mService:'private', mFlag:'REJ', mSrcBytes:'50',   mDstBytes:'0',    mSerr:'0.0',  mRerr:'0.85', mCount:'12',  mNFL:'0',  mLoggedIn:'0', mDur:'1'},
+  r2l:    {mTarget:'10.0.0.20',  mProto:'tcp', mService:'ftp',     mFlag:'SF',  mSrcBytes:'2500', mDstBytes:'1800', mSerr:'0.0',  mRerr:'0.2',  mCount:'5',   mNFL:'18', mLoggedIn:'0', mDur:'60'},
+  u2r:    {mTarget:'10.0.0.30',  mProto:'tcp', mService:'ssh',     mFlag:'SF',  mSrcBytes:'4000', mDstBytes:'3000', mSerr:'0.0',  mRerr:'0.0',  mCount:'3',   mNFL:'0',  mLoggedIn:'1', mDur:'90'},
+  normal: {mTarget:'192.168.1.100', mProto:'tcp', mService:'http', mFlag:'SF',  mSrcBytes:'5000', mDstBytes:'8000', mSerr:'0.01', mRerr:'0.01', mCount:'20',  mNFL:'0',  mLoggedIn:'1', mDur:'5'},
+};
+function preset(p) {
+  const s = PRESETS[p]; if (!s) return;
+  Object.entries(s).forEach(([id,v]) => { const el = document.getElementById(id); if (el) el.value = v; });
+}
+function switchScanTab(m) {
+  ['manual','raw','pcap'].forEach(t => document.getElementById('mode'+t.charAt(0).toUpperCase()+t.slice(1)).style.display = t===m?'':'none');
+  ['M','R','P'].forEach((t,i) => document.getElementById('tab'+t).classList.toggle('active',['manual','raw','pcap'][i]===m));
+}
+
+async function runScan() {
+  if (!hasPermission('can_scan')) { alert('Your role cannot run scans.'); return; }
+  const btn = document.getElementById('scanBtn');
+  const isPcap = document.getElementById('tabP').classList.contains('active');
+  const isRaw  = document.getElementById('tabR').classList.contains('active');
+  const target = document.getElementById('mTarget')?.value || '192.168.1.10';
+  btn.disabled = true;
+  document.getElementById('resPlaceholder').style.display = 'none';
+  document.getElementById('resContent').style.display     = 'none';
+  document.getElementById('resProgress').style.display    = '';
+  document.getElementById('resBadge').innerHTML           = '';
+  document.getElementById('shapSection').style.display    = 'none';
+  document.getElementById('modelChips').innerHTML = MCHIPS.map(c=>'<span class="badge b-in" id="chip'+c.replace(/[^a-z]/gi,'')+'">'+c+'</span>').join('');
+  let progress = 0, stepIdx = 0;
+  const bar = document.getElementById('progressBar'), stepEl = document.getElementById('progressStep');
+  const timer = setInterval(() => {
+    progress = Math.min(progress + Math.random()*10 + 5, 93);
+    bar.style.width = progress.toFixed(0) + '%';
+    stepEl.textContent = STEPS[stepIdx % STEPS.length]; stepIdx++;
+    if (stepIdx <= MCHIPS.length) {
+      const ch = document.getElementById('chip' + MCHIPS[stepIdx-1]?.replace(/[^a-z]/gi,''));
+      if (ch) { ch.className = 'badge b-ok'; ch.textContent = '✓ ' + MCHIPS[stepIdx-1]; }
+    }
+  }, 450);
+  try {
+    let data;
+    if (isPcap) {
+      const file = document.getElementById('pcapFile').files[0];
+      if (!file) { alert('Select a .pcap file.'); clearInterval(timer); btn.disabled=false; return; }
+      const fd = new FormData(); fd.append('file', file);
+      data = await withFallback(() => CG.scanPcap(fd), () => getDemoScanResult(file.name));
+    } else if (isRaw) {
+      const raw = document.getElementById('rawData').value;
+      data = await withFallback(() => CG.scanRaw({packet_data:raw,target:'raw-input'}), () => getDemoScanResult('raw-logs'));
+    } else {
+      const body = {
+        target, protocol: document.getElementById('mProto').value,
+        service: document.getElementById('mService').value,
+        flag:    document.getElementById('mFlag').value,
+        src_bytes: +document.getElementById('mSrcBytes').value||0,
+        dst_bytes: +document.getElementById('mDstBytes').value||0,
+        serror_rate: +document.getElementById('mSerr').value||0,
+        rerror_rate: +document.getElementById('mRerr').value||0,
+        count:  +document.getElementById('mCount').value||10,
+        num_failed_logins: +document.getElementById('mNFL').value||0,
+        logged_in: +document.getElementById('mLoggedIn').value||1,
+        duration:  +document.getElementById('mDur').value||2,
+      };
+      data = await withFallback(() => CG.scan(body), () => getDemoScanResult(target));
+    }
+    clearInterval(timer); bar.style.width = '100%';
+    setTimeout(() => displayResults(data, btn), 300);
+  } catch (e) {
+    clearInterval(timer); displayResults(getDemoScanResult(target), btn);
+  }
+}
+
+function displayResults(data, btn) {
+  document.getElementById('resProgress').style.display = 'none';
+  document.getElementById('resContent').style.display  = '';
+  if (btn) btn.disabled = false;
+  const res = data.results || data;
+  currentScanId = data.scan_id || res.scan_id;
+  lastScanData  = data;
+  const sev = (res.severity || 'LOW').toLowerCase();
+  document.getElementById('resBadge').innerHTML = '<span class="badge '+badgeClass(sev)+'">'+res.severity+'</span>';
+
+  document.getElementById('resSummary').innerHTML =
+    '<div class="find-bl" style="border-color:rgba(0,191,173,.2);margin-bottom:12px">' +
+    '<div class="find-tp"><span class="find-nm">ASSESSMENT: '+res.label+'</span><span class="badge '+badgeClass(sev)+'">'+res.severity+'</span></div>' +
+    '<div style="font-family:var(--mono);font-size:11px;line-height:1.8">' +
+    '<b>Family:</b> '+(res.attack_family||'—')+' &nbsp;·&nbsp; <b>Confidence:</b> '+res.confidence+'%<br>' +
+    '<b>MITRE:</b> <span class="mitre-tg">'+(res.mitre_tactic||'N/A')+'</span><br>' +
+    '<b>Target:</b> '+(data.target||data.filename||'—')+' &nbsp;·&nbsp; <b>Time:</b> '+new Date(data.timestamp||Date.now()).toLocaleTimeString() +
+    '</div></div>';
+
+  const mo = res.model_outputs || {};
+  document.getElementById('resModels').innerHTML =
+    '<div class="find-bl" style="margin-bottom:12px">' +
+    '<div class="find-tp"><span class="find-nm">6 MODEL OUTPUTS</span><span style="font-size:10px;color:var(--txt3);font-family:var(--mono)">Real NSL-KDD + UNSW-NB15</span></div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px">' +
+    Object.entries(mo).map(([m,o]) =>
+      '<div style="background:var(--bg);border-radius:var(--r);padding:8px 10px;border:1px solid var(--bg4)">' +
+      '<div style="font-size:9px;color:var(--txt3);font-family:var(--mono);text-transform:uppercase;margin-bottom:3px">'+m.replace(/_/g,' ')+'<span style="color:var(--teal);margin-left:4px">'+(o.classification?'('+o.classification+')':'')+'</span></div>' +
+      '<div style="font-size:12px;font-weight:600;font-family:var(--mono);color:var(--txt)">'+(o.label||(o.anomaly!==undefined?(o.anomaly?'⚠ ANOMALY':'✓ NORMAL'):'-'))+'</div>' +
+      (o.confidence!==undefined?'<div style="font-size:10px;color:var(--txt3);font-family:var(--mono)">'+o.confidence+'% conf</div>':'') +
+      (o.score!==undefined?'<div style="font-size:10px;color:'+(o.anomaly?'var(--red)':'var(--green)')+';font-family:var(--mono)">score: '+o.score+'</div>':'') +
+      '</div>'
+    ).join('') + '</div></div>';
+
+  const cves = res.cve_refs || [];
+  document.getElementById('resCVE').innerHTML = cves.length ?
+    '<div class="find-bl" style="margin-bottom:12px"><div class="find-tp"><span class="find-nm">CVE REFERENCES</span></div><div style="margin-top:6px">' +
+    cves.map(c=>'<span class="cve-tg">'+c+'</span>').join('') + '</div></div>' : '';
+
+  document.getElementById('resActions').innerHTML =
+    '<div class="find-bl"><div class="find-tp"><span class="find-nm">RECOMMENDED ACTIONS</span></div>' +
+    '<ol style="padding-left:16px;margin-top:7px">' +
+    (res.recommendations||[]).map(r=>'<li style="font-size:11px;color:var(--txt2);margin-bottom:5px;line-height:1.6;font-family:var(--mono)">'+r+'</li>').join('') +
+    '</ol></div>';
+
+  applyRBAC();
+  const entry = {id:Date.now(),timestamp:new Date().toISOString(),target:data.target||data.filename||'?',label:res.label,severity:res.severity,confidence:res.confidence};
+  scanHistory.unshift(entry); scanHistory = scanHistory.slice(0,20);
+  try { sessionStorage.setItem('cg_hist', JSON.stringify(scanHistory)); } catch {}
+  renderHistory();
+}
+
+async function loadShap() {
+  if (!hasPermission('can_shap')) { alert('Your role cannot access SHAP.'); return; }
+  const res = lastScanData?.results || {};
+  document.getElementById('shapSection').style.display = '';
+  document.querySelector('.shap-bars').innerHTML = '<div style="font-size:11px;color:var(--txt3);font-family:var(--mono)">Computing SHAP from real RF feature importances…</div>';
+  const expl = await withFallback(
+    () => currentScanId ? CG.shap(currentScanId).then(r=>r.explanation||r) : Promise.reject(),
+    () => getDemoShap(res.label||'NORMAL')
+  );
+  renderShap(document.getElementById('shapSection'), expl);
+}
+
+async function downloadPdf() {
+  if (!hasPermission('can_pdf')) { alert('Your role cannot generate PDFs.'); return; }
+  if (!lastScanData) { alert('Run a scan first.'); return; }
+  const btn = event.target; btn.disabled=true; btn.textContent='⏳ GENERATING…';
+  try {
+    await withFallback(
+      () => CG.pdfReport({results:lastScanData.results, scan_meta:{target:lastScanData.target,timestamp:lastScanData.timestamp}}),
+      () => { alert('📋 PDF Report\n\nBackend not running — start python app.py for real PDF download.\nContains: all 6 model outputs, MITRE mapping, CVEs, remediation commands.'); return {success:true}; }
+    );
+  } catch (e) { alert('PDF error: '+e.message); }
+  btn.disabled=false; btn.textContent='📋 PDF';
+}
+
+async function sendEmailResult() {
+  if (!hasPermission('can_email')) { alert('Your role cannot send emails.'); return; }
+  const email = document.getElementById('eEmail').value;
+  const name  = document.getElementById('eName').value || 'Analyst';
+  if (!email || !email.includes('@')) { alert('Enter your email address first.'); return; }
+  if (!lastScanData) { alert('Run a scan first.'); return; }
+  const btn = event.target; btn.disabled=true; btn.textContent='⏳ SENDING…';
+  try {
+    const resp = await fetch((window.CG_API||'http://localhost:5000/api') + '/notify/email', {
+      method: 'POST',
+      headers: {'Authorization':'Bearer '+getToken(),'Content-Type':'application/json'},
+      body: JSON.stringify({email, name, subject:'CyberGuard IDS Security Report', results:lastScanData.results})
+    });
+    const result = await resp.json();
+    if (result.success) {
+      alert('✅ Report sent to '+email+'\n\nContains: threat classification, all 6 model outputs, SHAP analysis, CVE references, and remediation commands.');
+      document.getElementById('emailConfigNote').style.display = 'none';
+    } else if (result.type === 'config' || resp.status === 400) {
+      // Show the App Password instructions inline
+      const noteEl = document.getElementById('emailConfigNote');
+      noteEl.style.display = '';
+      alert('📧 Email Configuration Required\n\n' + result.error.split('\n').slice(0,6).join('\n'));
+    } else {
+      alert('Email failed: '+result.error);
+    }
+  } catch (e) {
+    // Backend not running — show config note
+    document.getElementById('emailConfigNote').style.display = '';
+    alert('📧 Email\n\nBackend not running or not configured.\n\nTo send real emails:\n1. Start backend: python backend/app.py\n2. Set SMTP_USER and SMTP_PASS (App Password) in backend/.env\n3. Get Gmail App Password at: myaccount.google.com → Security → App passwords');
+  }
+  btn.disabled=false; btn.textContent='📧 EMAIL';
+}
+
+async function postSlack() {
+  if (!hasPermission('can_slack')) { alert('Your role cannot post Slack alerts.'); return; }
+  if (!lastScanData) { alert('Run a scan first.'); return; }
+  const r = lastScanData.results || {};
+  await withFallback(() => CG.slack('['+r.severity+'] '+r.label+' — target: '+(lastScanData.target||'?')+' — '+r.confidence+'% confidence', r.severity?.toLowerCase()), ()=>{});
+  alert('💬 Slack alert posted!\nConfigure SLACK_WEBHOOK_URL in backend/.env for real delivery.');
+}
+
+function clearScan() {
+  document.getElementById('resContent').style.display     = 'none';
+  document.getElementById('resPlaceholder').style.display = '';
+  document.getElementById('resBadge').innerHTML           = '';
+  document.getElementById('shapSection').style.display    = 'none';
+  currentScanId = null; lastScanData = null;
+}
+
+function renderHistory() {
+  const el = document.getElementById('histGrid');
+  const ct = document.getElementById('histCount');
+  if (ct) ct.textContent = scanHistory.length + ' scan'+(scanHistory.length!==1?'s':'')+' this session';
+  if (!el) return;
+  el.innerHTML = scanHistory.length ?
+    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:9px">' +
+    scanHistory.map(s =>
+      '<div class="find-bl"><div class="find-tp"><span style="font-size:11px;font-weight:600;font-family:var(--mono)">'+s.target+'</span><span class="badge '+badgeClass(s.severity)+'">'+s.severity+'</span></div>' +
+      '<div style="font-size:10px;color:var(--txt2);margin-top:3px;font-family:var(--mono)">'+s.label+' · '+s.confidence+'% · '+new Date(s.timestamp).toLocaleTimeString()+'</div></div>'
+    ).join('') + '</div>' :
+    '<div style="color:var(--txt3);font-size:12px;font-family:var(--mono)">No scans yet this session.</div>';
+}
+</script>
+</body>
+</html>

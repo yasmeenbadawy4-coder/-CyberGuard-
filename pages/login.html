@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Login — CyberGuard IDS</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>⚡</text></svg>">
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body class="auth-wrap">
+<div class="auth-card">
+  <div style="text-align:center;margin-bottom:20px">
+    <div class="auth-hex">⚡</div>
+    <div class="auth-title">CYBERGUARD IDS</div>
+    <div class="auth-sub">AI-POWERED NETWORK INTRUSION DETECTION · 6 REAL MODELS · v1.0</div>
+  </div>
+  <div class="auth-tabs">
+    <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">SIGN IN</button>
+    <button class="auth-tab" id="tabReg" onclick="switchTab('register')">REGISTER</button>
+  </div>
+  <div class="f-err" id="errBox"></div>
+  <div class="f-ok"  id="okBox"></div>
+  <div id="loginForm">
+    <div class="f-sc"><label class="f-lb">Username</label><input class="f-in" id="loginUser" value="admin" autocomplete="username"></div>
+    <div class="f-sc"><label class="f-lb">Password</label><input class="f-in" id="loginPass" type="password" value="CyberGuard2024!" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn btn-pri btn-full" id="loginBtn" onclick="doLogin()" style="font-family:'Orbitron',sans-serif;letter-spacing:1.5px;margin-bottom:14px">▶ AUTHENTICATE</button>
+    <div style="background:var(--bg3);border:1px solid var(--bg5);border-radius:var(--r);padding:10px 12px;font-size:11px;font-family:var(--mono);color:var(--txt3)">
+      Default accounts:<br>
+      <span style="color:var(--teal)">admin</span> / CyberGuard2024! &nbsp;·&nbsp;
+      <span style="color:var(--amber)">analyst</span> / Analyst2024! &nbsp;·&nbsp;
+      <span style="color:var(--txt2)">viewer</span> / Viewer2024!
+    </div>
+  </div>
+  <div id="registerForm" style="display:none">
+    <div class="f-sc"><label class="f-lb">Username</label><input class="f-in" id="regUser" placeholder="Min. 3 characters" autocomplete="off"></div>
+    <div class="f-sc"><label class="f-lb">Email Address</label><input class="f-in" id="regEmail" type="email" placeholder="your@email.com"></div>
+    <div class="f-rw f-sc">
+      <div><label class="f-lb">Password</label><input class="f-in" id="regPass" type="password" placeholder="Min. 8 characters"></div>
+      <div><label class="f-lb">Confirm</label><input class="f-in" id="regPass2" type="password" placeholder="Repeat password"></div>
+    </div>
+    <div class="f-sc">
+      <label class="f-lb">Role</label>
+      <div class="role-sel">
+        <div class="role-chip active" onclick="selectRole('viewer',this)">VIEWER</div>
+        <div class="role-chip" onclick="selectRole('analyst',this)">ANALYST</div>
+        <div class="role-chip" onclick="selectRole('admin',this)">ADMIN</div>
+      </div>
+    </div>
+    <div class="f-sc" id="adminKeyRow" style="display:none">
+      <label class="f-lb">Admin Registration Key</label>
+      <input class="f-in" id="regAdminKey" type="password" placeholder="Required for Analyst/Admin roles">
+      <div class="f-ht" style="color:var(--amber)">⚠ Default key: cg-admin-secret (change in backend/.env)</div>
+    </div>
+    <button class="btn btn-pri btn-full" id="regBtn" onclick="doRegister()" style="font-family:'Orbitron',sans-serif;letter-spacing:1.5px;margin-bottom:14px">▶ CREATE ACCOUNT</button>
+  </div>
+</div>
+<script src="../assets/js/cyberguard.js"></script>
+<script>
+if(isLoggedIn())window.location.href='../index.html';
+const DEMO_PERMS={
+  admin:{can_scan:true,can_export_siem:true,can_retrain:true,can_manage_users:true,can_slack:true,can_view_alerts:true,can_pdf:true,can_email:true,can_shap:true,can_live_monitor:true},
+  analyst:{can_scan:true,can_export_siem:true,can_retrain:false,can_manage_users:false,can_slack:false,can_view_alerts:true,can_pdf:true,can_email:true,can_shap:true,can_live_monitor:true},
+  viewer:{can_scan:false,can_export_siem:false,can_retrain:false,can_manage_users:false,can_slack:false,can_view_alerts:true,can_pdf:false,can_email:false,can_shap:false,can_live_monitor:false},
+};
+const DEMO_CREDS={admin:'CyberGuard2024!',analyst:'Analyst2024!',viewer:'Viewer2024!'};
+let selRole='viewer';
+function switchTab(t){
+  document.getElementById('loginForm').style.display=t==='login'?'':'none';
+  document.getElementById('registerForm').style.display=t==='register'?'':'none';
+  document.getElementById('tabLogin').classList.toggle('active',t==='login');
+  document.getElementById('tabReg').classList.toggle('active',t==='register');
+  document.getElementById('errBox').style.display='none';
+  document.getElementById('okBox').style.display='none';
+}
+function selectRole(r,el){selRole=r;document.querySelectorAll('.role-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');document.getElementById('adminKeyRow').style.display=r!=='viewer'?'':'none';}
+function showErr(m){const e=document.getElementById('errBox');e.textContent=m;e.style.display='';document.getElementById('okBox').style.display='none';}
+function showOk(m){const e=document.getElementById('okBox');e.textContent=m;e.style.display='';document.getElementById('errBox').style.display='none';}
+async function doLogin(){
+  const btn=document.getElementById('loginBtn');
+  const u=document.getElementById('loginUser').value.trim();
+  const p=document.getElementById('loginPass').value;
+  if(!u||!p){showErr('Enter username and password.');return;}
+  btn.disabled=true;btn.textContent='AUTHENTICATING…';document.getElementById('errBox').style.display='none';
+  try{
+    const res=await withFallback(()=>CG.login(u,p),()=>{
+      if(DEMO_CREDS[u]!==p)throw new Error('Invalid credentials.');
+      return{token:'demo-'+btoa(u+':'+Date.now()),username:u,role:u,permissions:DEMO_PERMS[u]||DEMO_PERMS.viewer};
+    });
+    storeSession(res.token,{username:res.username||u,role:res.role,email:res.email||''},res.permissions||DEMO_PERMS[res.role]||{});
+    window.location.href='../index.html';
+  }catch(e){showErr(e.message||'Invalid credentials.');btn.disabled=false;btn.textContent='▶ AUTHENTICATE';}
+}
+async function doRegister(){
+  const btn=document.getElementById('regBtn');
+  const u=document.getElementById('regUser').value.trim();
+  const em=document.getElementById('regEmail').value.trim();
+  const p=document.getElementById('regPass').value;
+  const p2=document.getElementById('regPass2').value;
+  const akey=document.getElementById('regAdminKey').value;
+  if(u.length<3){showErr('Username must be ≥ 3 characters.');return;}
+  if(!em.includes('@')){showErr('Enter a valid email address.');return;}
+  if(p.length<8){showErr('Password must be ≥ 8 characters.');return;}
+  if(p!==p2){showErr('Passwords do not match.');return;}
+  btn.disabled=true;btn.textContent='CREATING…';document.getElementById('errBox').style.display='none';
+  try{
+    const res=await withFallback(()=>CG.register(u,p,em,selRole,akey),()=>{
+      if(selRole!=='viewer'&&akey!=='cg-admin-secret')throw new Error('Admin key required for Analyst/Admin roles.');
+      return{message:'Account created (demo mode). Start backend for real persistence.',username:u,role:selRole};
+    });
+    showOk('✅ '+(res.message||'Account created! You can now sign in.'));
+    setTimeout(()=>switchTab('login'),2000);
+  }catch(e){showErr(e.message||'Registration failed.');}
+  finally{btn.disabled=false;btn.textContent='▶ CREATE ACCOUNT';}
+}
+</script>
+</body></html>
