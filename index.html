@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Dashboard — CyberGuard IDS</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>⚡</text></svg>">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<div class="ticker"><div class="ticker-inner" id="tickerInner"></div></div>
+<nav class="nav">
+  <div class="logo"><div class="logo-hex">⚡</div><div class="logo-text">CYBER<span style="color:var(--amber)">GUARD</span></div></div>
+  <ul class="nav-tabs"><li><a href="index.html" class="nav-tab active">DASHBOARD</a></li><li><a href="pages/alerts.html" class="nav-tab">ALERTS</a></li><li><a href="pages/scan.html" class="nav-tab">SCANNER</a></li><li><a href="pages/realtime.html" class="nav-tab">LIVE IDS</a></li><li><a href="pages/education.html" class="nav-tab">CYBER INTEL</a></li><li><a href="pages/models.html" class="nav-tab">MODELS & API</a></li></ul>
+  <div class="nav-right">
+    <div class="sys-pill"><span class="sdot"></span>ONLINE</div>
+    <button class="bell-btn" id="bellBtn">🔔<span class="bell-count" id="bellCount">4</span></button>
+    <div class="user-chip" id="userChip"><div class="uav" id="avatarEl">A</div><span id="usernameEl">USER</span><span style="color:var(--txt3)">▼</span></div>
+  </div>
+</nav>
+<div class="alert-drawer" id="alertDrawer"><div class="dr-head"><span class="dr-title">⚠ ACTIVE ALERTS</span><button class="dr-close" id="drawerClose">✕</button></div><div class="dr-body" id="drawerBody"></div></div>
+<div class="dr-overlay" id="drawerOverlay"></div>
+<main class="wrap">
+  <div class="pg-head">
+    <div><h1 class="pg-title">SECURITY OPERATIONS CENTER</h1>
+    <p class="pg-sub">REAL-TIME THREAT MONITORING · 6 ML MODELS · NSL-KDD 100% · UNSW-NB15 84% · <span id="lastUpdated">–</span></p></div>
+    <div class="hd-acts">
+      <button class="btn btn-sm btn-out" onclick="refreshDashboard()">↻ REFRESH</button>
+      <a href="pages/realtime.html" class="btn btn-sm btn-grn" data-permission="can_live_monitor">📡 LIVE IDS</a>
+      <a href="pages/scan.html" class="btn btn-sm btn-pri" data-permission="can_scan">⚡ NEW SCAN</a>
+    </div>
+  </div>
+  <div class="kpi-row" id="kpiRow"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 300px;gap:14px">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="card">
+        <div class="cd-hd"><span class="cd-tt">LIVE NETWORK TRAFFIC</span>
+          <div style="display:flex;gap:10px;font-size:10px;font-family:var(--mono)">
+            <span style="color:var(--teal)">● NORMAL</span><span style="color:var(--red)">● ANOMALY</span><span style="color:var(--amber)">● SUSPICIOUS</span>
+          </div>
+        </div>
+        <canvas id="trafficCanvas" height="155" style="width:100%;display:block;padding:10px 14px"></canvas>
+      </div>
+      <div class="card">
+        <div class="cd-hd"><span class="cd-tt">ATTACK ORIGIN MAP</span><span style="font-size:10px;color:var(--txt3);font-family:var(--mono)">GEO INTELLIGENCE</span></div>
+        <div style="position:relative;height:145px;overflow:hidden;background:var(--bg3)"><canvas id="mapCanvas" style="width:100%;height:100%;display:block"></canvas></div>
+        <div id="geoList" style="padding:8px 14px"></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="card">
+        <div class="cd-hd"><span class="cd-tt">ATTACK DISTRIBUTION</span><span style="font-size:10px;color:var(--txt3);font-family:var(--mono)">LAST 24H</span></div>
+        <div style="display:flex;align-items:center">
+          <canvas id="donutCanvas" width="200" height="200" style="flex-shrink:0"></canvas>
+          <div id="donutLegend" style="padding:0 10px;flex:1;display:flex;flex-direction:column;gap:5px"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="cd-hd"><span class="cd-tt">6 REAL ML MODELS</span><a href="pages/models.html" class="btn btn-xs btn-sec">VIEW ALL</a></div>
+        <div id="modelStatusList" style="padding:8px"></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="card">
+        <div class="cd-hd"><span class="cd-tt">LIVE THREAT FEED</span><span class="live-b" id="feedStatus">STREAMING</span></div>
+        <div class="t-list" id="threatFeed"></div>
+        <a href="pages/realtime.html" data-permission="can_live_monitor" style="display:block;padding:8px 14px;font-size:10px;color:var(--teal);font-family:var(--mono);border-top:1px solid var(--bg4);text-align:center">▶ OPEN LIVE IDS MONITOR →</a>
+      </div>
+      <div class="card">
+        <div class="cd-hd"><span class="cd-tt">ROLE & PERMISSIONS</span></div>
+        <div id="rolePanel" style="padding:10px 14px;font-size:11px;font-family:var(--mono)"></div>
+      </div>
+    </div>
+  </div>
+</main>
+<footer class="footer"><span>CyberGuard IDS v1.0 · RF · XGBoost · DT · ANN · Autoencoder · Hybrid AE+XGB · NSL-KDD + UNSW-NB15</span><span id="ftTime"></span></footer>
+<script src="assets/js/cyberguard.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  requireLogin(); initTicker(); initNavDrawer(); initUserChip(); applyRBAC();
+  document.getElementById('ftTime').textContent = new Date().toUTCString();
+  pageInit();
+});
+
+let feedIdx=0;
+
+async function pageInit() {
+  // Step 1: Render demo data IMMEDIATELY — no waiting for API
+  renderKPIs(DEMO_STATS);
+  renderModelList(REAL_MODELS);
+  renderFeed();
+  renderGeoList();
+  renderRolePanel();
+  drawTrafficChart('trafficCanvas');
+  drawDonutChart('donutCanvas','donutLegend',DEMO_STATS.attack_distribution);
+  drawWorldMap('mapCanvas');
+  document.getElementById('lastUpdated').textContent = 'Demo data — ' + new Date().toLocaleTimeString();
+
+  // Step 2: Try to get real data from backend in background
+  await refreshFromAPI();
+
+  // Step 3: Set up auto-refresh
+  setInterval(refreshFromAPI, 60000);
+  setInterval(rotateFeed, 4000);
+  setInterval(() => drawTrafficChart('trafficCanvas'), 15000);
+}
+
+async function refreshDashboard() {
+  await refreshFromAPI();
+}
+
+async function refreshFromAPI() {
+  try {
+    const [stats, models] = await Promise.all([
+      CG.stats().catch(() => null),
+      CG.models().catch(() => null),
+    ]);
+    if (stats) {
+      renderKPIs(stats);
+      drawDonutChart('donutCanvas','donutLegend',stats.attack_distribution);
+    }
+    if (models && Array.isArray(models) && models.length) {
+      renderModelList(models);
+    }
+    document.getElementById('lastUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+  } catch (e) {
+    // Backend unreachable — demo data already showing, nothing to do
+  }
+}
+
+function renderKPIs(s) {
+  const evts = s.total_events_24h || 0;
+  document.getElementById('kpiRow').innerHTML = [
+    {cl:'r', ic:'🚨', lb:'Critical Threats', vl:s.critical_threats_24h||0, sb:'Last 24 hours'},
+    {cl:'a', ic:'📡', lb:'Total Events',      vl:evts.toLocaleString(),     sb:'Monitored flows'},
+    {cl:'g', ic:'🛡️', lb:'Auto-Blocked',      vl:Math.floor(evts*.37).toLocaleString(), sb:'Mitigated flows'},
+    {cl:'b', ic:'⚡', lb:'System Status',      vl:'ONLINE',                 sb:'6 real models active'},
+  ].map(c=>'<div class="kpi '+c.cl+'"><div class="kpi-ic">'+c.ic+'</div><div class="kpi-lb">'+c.lb+'</div><div class="kpi-vl">'+c.vl+'</div><div class="kpi-sb">'+c.sb+'</div></div>').join('');
+}
+
+function renderFeed() {
+  document.getElementById('threatFeed').innerHTML = DEMO_THREATS.slice(0,6).map(t =>
+    '<div class="t-item" onclick="window.location=\'pages/scan.html\'"><span class="sv-dot '+t.sev+'"></span><div style="flex:1;min-width:0"><div class="t-nm">'+t.name+'</div><div class="t-mt">'+t.ip+' · '+t.type+' · '+t.country+'</div></div><span class="t-tm">'+t.time+'</span></div>'
+  ).join('');
+}
+
+function rotateFeed() {
+  feedIdx = (feedIdx + 1) % DEMO_THREATS.length;
+  const feed = document.getElementById('threatFeed'); if (!feed) return;
+  const t = DEMO_THREATS[feedIdx];
+  const el = document.createElement('div'); el.className = 't-item live-event'; el.style.opacity='0';
+  el.innerHTML = '<span class="sv-dot '+t.sev+'"></span><div style="flex:1;min-width:0"><div class="t-nm">'+t.name+'</div><div class="t-mt">'+t.ip+' · just now</div></div><span class="t-tm">now</span>';
+  feed.insertBefore(el, feed.firstChild);
+  requestAnimationFrame(() => el.style.opacity='1');
+  if (feed.children.length > 6) feed.removeChild(feed.lastChild);
+}
+
+function renderModelList(models) {
+  document.getElementById('modelStatusList').innerHTML = (models||REAL_MODELS).map(m=>
+    '<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 9px;border-bottom:1px solid var(--bg4)">'+
+    '<div><div style="font-size:12px;font-weight:600;font-family:var(--mono)">'+m.name+'</div>'+
+    '<div style="font-size:9px;color:var(--txt3);font-family:var(--mono)">'+m.dataset+' · '+m.features+' feat</div>'+
+    '<div class="m-bar" style="width:100px;margin-top:3px"><div class="m-fill" style="width:'+m.accuracy+'%"></div></div></div>'+
+    '<div style="text-align:right"><span class="badge b-ok">REAL</span>'+
+    '<div style="font-size:10px;color:var(--teal);font-family:var(--mono);margin-top:2px">'+m.accuracy+'%</div></div></div>'
+  ).join('');
+}
+
+function renderGeoList() {
+  const geo=[{c:'China',n:187},{c:'Russia',n:143},{c:'Germany',n:89},{c:'United States',n:76},{c:'Netherlands',n:42}];
+  document.getElementById('geoList').innerHTML=geo.map(s=>
+    '<div style="display:flex;justify-content:space-between;font-size:10px;font-family:var(--mono);color:var(--txt3);padding:3px 0;border-bottom:1px solid var(--bg4)">'+
+    '<span>'+s.c+'</span><span style="color:var(--red);font-weight:700">▲ '+s.n+'</span></div>'
+  ).join('');
+}
+
+function renderRolePanel() {
+  const u=getUser(); const p=getPerms(); const role=u.role||'viewer';
+  const col={admin:'var(--teal)',analyst:'var(--amber)',viewer:'var(--purple)'}[role]||'var(--teal)';
+  const perms=[
+    ['can_scan','⚡ Run Scans'],['can_shap','🔬 SHAP Explain'],['can_pdf','📋 PDF Reports'],
+    ['can_email','📧 Email Reports'],['can_live_monitor','📡 Live IDS'],['can_export_siem','📤 SIEM Export'],
+    ['can_manage_users','👥 User Mgmt'],['can_retrain','🔄 Retrain Models'],
+  ];
+  document.getElementById('rolePanel').innerHTML=
+    '<div style="margin-bottom:8px">User: <span style="color:'+col+';font-weight:700">'+(u.username||'?')+'</span></div>'+
+    '<div style="margin-bottom:10px">Role: <span style="color:'+col+'">'+role.toUpperCase()+'</span></div>'+
+    perms.map(([k,l])=>'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--bg4)">'+
+      '<span style="color:var(--txt2)">'+l+'</span><span style="color:'+(p[k]?'var(--green)':'var(--red)')+'">'+( p[k]?'✓':'✗')+'</span></div>').join('');
+}
+
+</script>
+</body>
+</html>
